@@ -3,7 +3,6 @@ from lib.tweet_splitter import split_authors, split_json, split_locations
 from lib.data_exporter import DataExporter
 from lib.sentiment_analyzer import analyze_tweet_sentiments, analyze_tweet_keywords
 import json
-import pyodbc
 import sys
 
 

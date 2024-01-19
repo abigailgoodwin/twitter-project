@@ -5,7 +5,7 @@ data_exporter: the file in charge of opening a connection to the database and qu
 
 import sqlite3
 import os
-from tweet_splitter import collect_hashtags
+from lib.tweet_splitter import collect_hashtags
 
 
 class DataExporter:
@@ -142,19 +142,19 @@ class DataExporter:
 
         return created_location_id
 
-    def add_tweet(self, topic, tweet, tweetAuthorID, locationID):
+    def add_tweet(self, topic, tweet, tweet_author_id, location_id):
         """
         Adds a tweet to the Tweets table.
 
         @param tweet: The tweet that we are adding.
-        @param tweetAuthorID: the UserID for the Author (PK in Users table)
-        @param locationID: the LocationID for the Location (PK in Locations table)
+        @param tweet_author_id: the UserID for the Author (PK in Users table)
+        @param location_id: the LocationID for the Location (PK in Locations table)
         @return void
         """
         # <Query Info>
         # tweet_id: The tweet's ID (created by Twitter, not us)
         # authorID: The author's ID (should have been created before, passed in)
-        # locationID: The location ID (should have been created, passed in as param)
+        # location_id: The location ID (should have been created, passed in as param)
 
         # Verify that this exact Tweet isn't already in the DB:
         not_in_table = self.verify_not_in_table(
@@ -173,7 +173,7 @@ class DataExporter:
             sql_query = f"""
                 INSERT INTO TwitterBase.Tweets (TweetID, TweetAuthorID, LocationID, TweetDate, TweetBody, TweetJSON, TweetTopic)
                 VALUES
-                    ({tweet['id']}, {tweetAuthorID}, {locationID if not None else "NULL"}, {date_time}, {tweet['text']}, {tweet}, {topic})
+                    ({tweet['id']}, {tweet_author_id}, {location_id if not None else "NULL"}, {date_time}, {tweet['text']}, {tweet}, {topic})
             """
             self.cursor.execute(sql_query)
             self.connection.commit()
