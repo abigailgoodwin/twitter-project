@@ -1,12 +1,3 @@
--- Abigail Goodwin
--- CS 3550 Fall 2021
--- December 4th, 2021
--- Twitter Database
-
-use abigailgoodwin
-GO
-
-
 WITH DistinctTweets
 AS
 (

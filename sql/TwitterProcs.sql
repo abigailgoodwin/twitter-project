@@ -1,13 +1,3 @@
--- Author: Abigail Goodwin <abby.goodwin@outlook.com>
--- November 15th, 2021
--- Twitter Database
--- Copyright 2022, Abigail Goodwin, All rights reserved.
-
--- CREATE SCHEMA TwitterBase;
-USE abigailgoodwin
-GO
-
--- Step 1: Insert Author
 CREATE OR ALTER PROCEDURE TwitterBase.InsertAuthor
 (
     @authorID bigint,
@@ -18,7 +8,6 @@ CREATE OR ALTER PROCEDURE TwitterBase.InsertAuthor
 AS
 BEGIN
     SET NOCOUNT ON
-    -- Step 1: Verify that the user doesn't already exist.
     IF (SELECT COUNT(*) FROM TwitterBase.Users AS U WHERE U.AuthorID = @authorID) = 0
         BEGIN
             INSERT INTO TwitterBase.Users (AuthorID, UserHandle, UserName)
@@ -26,12 +15,10 @@ BEGIN
                 (@authorID, @UserHandle, @UserName)
         END
 
-    -- Returns the newly-created PK for the User (UserID):
     SELECT @userID = UserID FROM TwitterBase.Users WHERE AuthorID = @authorID
     SET NOCOUNT OFF
 END
 
--- Step 2: Insert Location
 GO
 CREATE OR ALTER PROCEDURE TwitterBase.InsertLocation
 (
@@ -55,12 +42,11 @@ BEGIN
     SET NOCOUNT OFF
 END
 
--- Step 3: Insert Tweet
 GO
 CREATE OR ALTER PROCEDURE TwitterBase.InsertTweet
 (
     @TweetID bigint,
-    @TweetAuthorID int, -- FK
+    @TweetAuthorID int,
     @LocationID nvarchar(255),
     @TweetDate datetime,
     @TweetBody nvarchar(255),
@@ -81,7 +67,6 @@ BEGIN
     SET NOCOUNT OFF 
 END
 
--- Step 4: Insert Hashtags & Into Junction Table
 GO
 CREATE OR ALTER PROCEDURE TwitterBase.InsertHashtags
 (
@@ -112,7 +97,6 @@ BEGIN
     SET NOCOUNT OFF
 END
 
--- Step 6: Insert Tweet Sentiment Data Into DB
 GO
 CREATE OR ALTER PROCEDURE TwitterBase.InsertSentimentInfo
 (
@@ -126,7 +110,6 @@ AS
 BEGIN
     SET NOCOUNT ON
 
-    -- Step 1: Add Overall Tweet Sentiment Into DB
     IF (SELECT COUNT(*) FROM TwitterBase.TweetSentiment AS TS WHERE TS.TweetID = @TweetID) = 0
     BEGIN
         DECLARE @TweetSentimentID INT
@@ -142,7 +125,6 @@ BEGIN
             (@TweetID, @TweetSentimentID)
     
     END
-    -- Step 2: Add Confidence Scores for Tweet Into DB
     IF (SELECT COUNT(*) FROM TwitterBase.TweetConfidence AS TC WHERE TC.TweetID = @TweetID) < 3
     BEGIN
 
@@ -157,7 +139,6 @@ BEGIN
     SET NOCOUNT OFF
 END
 
--- Step 7: Insert Tweet Keywords Into DB
 GO
 CREATE OR ALTER PROCEDURE TwitterBase.InsertKeyPhrase
 (
@@ -169,7 +150,6 @@ AS
 BEGIN
     SET NOCOUNT ON
     
-    -- Step 1: Check if keyword exists in KeyPhrases or not.
     IF (SELECT COUNT(*) FROM TwitterBase.KeyPhrases WHERE KeyPhraseText = @TweetKeyword) = 0
     BEGIN
         
@@ -179,7 +159,6 @@ BEGIN
 
     END
 
-    -- SELECT @hashtagID = HashtagID FROM TwitterBase.Hashtags AS H WHERE H.HashtagText = @hashtagText
     SELECT @KeyPhraseID = KeyPhraseID FROM TwitterBase.KeyPhrases AS KP WHERE KP.KeyPhraseText = @TweetKeyword
 
     SET NOCOUNT OFF
@@ -195,7 +174,6 @@ AS
 BEGIN
     SET NOCOUNT ON
 
-    -- Step 2: Add keyword to associated tweet.
     IF (SELECT COUNT(*) FROM TwitterBase.TweetKeyPhrases WHERE TweetID = @TweetID AND KeyPhraseID = @KeyPhraseID) = 0
     BEGIN
 

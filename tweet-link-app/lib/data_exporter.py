@@ -3,27 +3,15 @@ data_exporter: the file in charge of opening a connection to the database and qu
 @author Abigail Goodwin <abby.goodwin@outlook.com>
 """
 
-import pyodbc
+import sqlite3
+import os
 from tweet_splitter import collect_hashtags
 
 
 class DataExporter:
     """
-    DataExporter: Responsible for sending data to the database.
-
-    Decided that I'd probably need an object for this to maintain the connection.
+    Class responsible for creating the SQLite Database and populating its tables.
     """
-    ############################################################
-    #   Class Attributes (DB Info)
-    ############################################################
-    # Absolutely NOT good coding practice. Need to obfuscate this data. Never connect to a database so openly like this.
-    #   Simply a placeholder.
-    server = ''
-    database = ''
-    username = ''
-    password = ''
-    connection = None
-    cursor = None
 
     ############################################################
     #   Constructor/Destructor
@@ -33,22 +21,50 @@ class DataExporter:
         """
         Constructor. Opens up a connection to the database when the object is called (and used).
         """
-        self.connection = pyodbc.connect('DRIVER={SQL Server Native Client 11.0};SERVER=' +
-                                         self.server + ';DATABASE=' + self.database +
-                                         ';UID=' + self.username + ';PWD=' + self.password)
+        # Path to the project's sql folder:
+        self.sql_path = os.path.realpath("../../sql/")
+
+        # Create the TwitterBase SQLite DB in the SQL folder:
+        self.connection = sqlite3.connect(
+            os.path.join(self.sql_path, "TwitterBase.db"))
+
+        # Store the cursor as a class member:
         self.cursor = self.connection.cursor()
-        print("INFO: Connection opened to " + self.server + ".")
+
+        # Lastly, create the database's tables, views, and stored procedures:
+        self.create_tables()
+
+        print(
+            f"INFO: Connection opened to SQLite Database at {self.sql_path}/TwitterBase.db.")
 
     def __del__(self):
         """
         Destructor. Closes the connection to the database when the object goes out of scope.
         """
         self.connection.close()
-        print("INFO: Connection to " + self.server + " closed.")
+        print("INFO: Connection to SQLite Database closed.")
 
     ############################################################
     #   Class Methods
     ############################################################
+
+    def create_tables(self) -> None:
+        """
+        Creates the database's schema, tables, views, and stored procedures.
+        """
+        # List of SQL files to execute:
+        sql_files = ["TwitterBase.sql",
+                     "TwitterBaseViews.sql", "TwitterProcs.sql"]
+
+        # Execute each script using SQLite:
+        for sql_file_path in sql_files:
+            # Open the SQL file and slurp its contents into a string:
+            with open(os.path.join(self.sql_path, sql_file_path), "r") as sql_file:
+                sql_script = sql_file.read()
+                self.cursor.executescript(sql_script)
+                self.connection.commit()
+
+        print("INFO: SQLite Database Successfully Configured.")
 
     def add_user(self, author):
         """
@@ -57,16 +73,31 @@ class DataExporter:
         @param tweet: A tweet
         @return userID: the primary key for the newly created author.
         """
-        sql_query = """
-            DECLARE @created_user_id int
-            EXEC TwitterBase.InsertAuthor ?,?,?,@userID = @created_user_ID OUTPUT
-            SELECT @created_user_ID AS [userID]
+        # First, verify that the author isn't already in the DB:
+        sql_query = f"""
+            SELECT COUNT(*) FROM TwitterBase.Users AS U WHERE U.AuthorID = {author[id]}
         """
-        args = (int(author['id']), author['username'], author['name'])
-        self.cursor.execute(sql_query, args)
-        rows = self.cursor.fetchall()
+        rows = self.cursor.execute(sql_query)
+        rows.fetchall()
+
+        # Only inserts the author if they don't exist in the DB:
+        if rows is None:
+            # Below query insert the new author:
+            sql_query = f"""
+            INSERT INTO TwitterBase.Users (AuthorID, UserHandle, UserName)
+            VALUES
+                ({author['id']}, {author['username']}, {author['name']})
+            """
+            self.cursor.execute(sql_query)
+            self.connection.commit()
+
+        # Grab the author's unique identifier (PK) from the DB:
+        sql_query = f"""
+        SELECT UserID FROM TwitterBase.Users WHERE AuthorID = {author['id']}
+        """
+        rows = self.cursor.execute(sql_query)
+        rows.fetchone()
         created_user_ID = rows[0][0]
-        self.cursor.commit()
 
         return created_user_ID
 
@@ -77,16 +108,29 @@ class DataExporter:
         @param tweet: A tweet.
         @return created_location_id: Primary key for the newly created Locations row.
         """
-        sql_query = """
-            DECLARE @created_location_id INT
-            EXEC TwitterBase.InsertLocation ?,?, @LocationID = @created_location_id OUTPUT
-            SELECT @created_location_id AS [LocationID]
+        sql_query = f"""
+            SELECT COUNT(*) FROM TwitterBase.Locations AS L WHERE L.LocationCode = {place['id']}
         """
-        args = (place['id'], place['full_name'])
-        self.cursor.execute(sql_query, args)
-        rows = self.cursor.fetchall()
+        rows = self.cursor.execute(sql_query)
+        rows.fetchall()
+
+        # Only insert the location if it doesn't already exist in the DB:
+        if rows is None:
+            # Below query inserts the new location:
+            sql_query = f"""
+            INSERT INTO TwitterBase.Locations (LocationCode, LocationName)
+            VALUES
+            ({place['id']}, {place['full_name']})
+            """
+            self.cursor.execute(sql_query)
+            self.connection.commit()
+
+        sql_query = f"""
+            SELECT LocationID FROM TwitterBase.Locations WHERE LocationCode = {place['id']}
+        """
+        rows = self.cursor.execute(sql_query)
+        rows.fetchone()
         created_location_id = rows[0][0]
-        self.cursor.commit()
 
         return created_location_id
 
@@ -104,40 +148,32 @@ class DataExporter:
         # authorID: The author's ID (should have been created before, passed in)
         # locationID: The location ID (should have been created, passed in as param)
 
-        sql_query = """
-            DECLARE @newDateTime datetime
-            SET @newDateTime = CONVERT(DATETIME, ?)
-            EXEC TwitterBase.InsertTweet ?,?,?,@newDateTime,?,?,?
+        # Verify that this exact Tweet isn't already in the DB:
+        sql_query = f"""
+            SELECT COUNT(*) FROM TwitterBase.Tweets AS T Where T.TweetID = {tweet['id']}
         """
-        args = (tweet['created_at'], int(tweet['id']), tweetAuthorID,
-                locationID, tweet['text'], str(tweet), topic)
-        self.cursor.execute(sql_query, args)
-        self.cursor.commit()
+        rows = self.cursor.execute(sql_query)
+        rows.fetchall()
 
-    def add_hashtags(self, tweet):
-        """
-        ***DEPRECATED***
-        Adds all the hashtags for a given tweet to the Hashtags table.
-        @param tweet: The tweet we're getting hashtags from.
-        @return hashtag_id_list: list of hashtag IDS connected to the given tweet.
-        """
-        hashtag_list = collect_hashtags(tweet)
-        hashtag_id_list = []
+        # Insert the new Tweet:
+        if rows is None:
 
-        for hashtag in hashtag_list:
-            sql_query = """
-            DECLARE @created_tag_ID int
-            EXEC TwitterBase.InsertHashtags ?, @hashtagID = @created_tag_ID OUTPUT
-            SELECT @created_tag_ID AS [tagID]
+            # Convert the Tweet's creation date to a datetime object:
+            sql_query = f"""
+                CONVERT(DATETIME, {tweet['created_at']})
             """
-            args = (hashtag)
-            self.cursor.execute(sql_query, args)
-            rows = self.cursor.fetchall()
-            created_tag_ID = rows[0][0]
-            hashtag_id_list.append(created_tag_ID)
-            self.cursor.commit()
+            rows = self.cursor.execute(sql_query)
+            rows.fetchone()
+            date_time = rows[0][0]
 
-        return hashtag_id_list
+            # Inser the Tweet into the table:
+            sql_query = f"""
+                INSERT INTO TwitterBase.Tweets (TweetID, TweetAuthorID, LocationID, TweetDate, TweetBody, TweetJSON, TweetTopic)
+                VALUES
+                    ({tweet['id']}, {tweetAuthorID}, {locationID if not None else "NULL"}, {date_time}, {tweet['text']}, {tweet}, {topic})
+            """
+            self.cursor.execute(sql_query)
+            self.connection.commit()
 
     def add_tweet_tags(self, tweet):
         """
@@ -149,12 +185,47 @@ class DataExporter:
         """
         tag_list = collect_hashtags(tweet)
         for tag in tag_list:
-            sql_query = """
-            EXEC TwitterBase.InsertHashtags ?,?
+            # Verify that the Hashtag is not in the table already:
+            sql_query = f"""
+                SELECT COUNT(*) FROM TwitterBase.Hashtags AS H WHERE H.HashtagText = {tag}
             """
-            args = (int(tweet['id']), tag)
-            self.cursor.execute(sql_query, args)
-            self.cursor.commit()
+            rows = self.cursor.execute(sql_query)
+            rows.fetchall()
+
+            # Insert the new tag:
+            if rows is None:
+                sql_query = f"""
+                    INSERT INTO TwitterBase.Hashtags (HashtagText)
+                    VALUES
+                        ({tag})
+                """
+                self.cursor.execute(sql_query)
+                self.connection.commit()
+
+            # Query for the hashtag's ID from the hashtag table:
+            sql_query = f"""
+                SELECT HashtagID FROM TwitterBase.Hashtags AS H WHERE H.HashtagText = {tag}
+            """
+            rows = self.cursor.execute(sql_query)
+            rows.fetchone()
+            hashtag_id = rows[0][0]
+
+            # Check if this Tweet has already been mapped to this hashtag:
+            sql_query = f"""
+                SELECT COUNT(*) FROM TwitterBase.TweetHashtags AS TH WHERE TH.TweetID = {tweet['id']} AND TH.HashtagID = {hashtag_id}
+            """
+            rows = self.cursor.execute(sql_query)
+            rows.fetchall()
+
+            # Only insert the new mapping if not already in the table:
+            if rows is None:
+                sql_query = f"""
+                    INSERT INTO TwitterBase.TweetHashtags (TweetID, HashtagID)
+                    VALUES
+                        ({tweet['id']}, {hashtag_id})
+                """
+                self.cursor.execute(sql_query)
+                self.connection.commit()
 
     def add_tweet_sentiment_info(self, tweet_info):
         """
@@ -169,7 +240,7 @@ class DataExporter:
         args = (int(tweet_info['id']), tweet_info['overall_sentiment'], tweet_info['confidence_scores']
                 ['positive'], tweet_info['confidence_scores']['neutral'], tweet_info['confidence_scores']['negative'])
         self.cursor.execute(sql_query, args)
-        self.cursor.commit()
+        self.connection.commit()
 
     def add_tweet_keywords(self, tweet_info, topic):
         """
@@ -198,7 +269,7 @@ class DataExporter:
                 sql_query = """EXEC TwitterBase.InsertTweetKeyPhrases ?,?"""
                 args = (int(tweet_id), int(created_phrase_ID))
                 self.cursor.execute(sql_query, args)
-                self.cursor.commit()
+                self.connection.commit()
 
     def check_existing_tweets(self, tweet_list):
         """

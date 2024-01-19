@@ -1,22 +1,14 @@
--- Abigail Goodwin
--- CS 3550 Fall 2021
--- November 15th, 2021
--- Twitter Database
+CREATE SCHEMA TwitterBase;
 
--- CREATE SCHEMA TwitterBase;
-
--- Dropping Tables
 DROP TABLE IF EXISTS TwitterBase.TweetKeyPhrases, TwitterBase.TweetHashtags, TwitterBase.TweetSentiment, TwitterBase.TweetConfidence, TwitterBase.Tweets;
 DROP TABLE IF EXISTS TwitterBase.Users, TwitterBase.ConfidenceTypes, TwitterBase.Hashtags, TwitterBase.Locations, TwitterBase.KeyPhrases, TwitterBase.Sentiments;
 
-
--- Creating Tables
 CREATE TABLE TwitterBase.Users
 (
     UserID int IDENTITY(1,1) PRIMARY KEY NOT NULL,
-    AuthorID bigint NOT NULL, -- Twitter ID
-    UserHandle nvarchar(255) NOT NULL, -- Twitter Username
-    UserName nvarchar(255) NOT NULL -- Real Name
+    AuthorID bigint NOT NULL,
+    UserHandle nvarchar(255) NOT NULL,
+    UserName nvarchar(255) NOT NULL
 )
 
 CREATE TABLE TwitterBase.Locations
@@ -29,13 +21,12 @@ CREATE TABLE TwitterBase.Locations
 CREATE TABLE TwitterBase.Tweets
 (
     TweetID bigint PRIMARY KEY NOT NULL,
-    TweetAuthorID int NOT NULL, -- FK
+    TweetAuthorID int NOT NULL, 
     TweetDate datetime NOT NULL,
-    LocationID int DEFAULT NULL, -- FK
+    LocationID int DEFAULT NULL, 
     TweetBody nvarchar(255) NOT NULL,
     TweetJSON nvarchar(255) NOT NULL,
     TweetTopic nvarchar(255) NOT NULL
-    -- Add more here eventually.
 )
 
 CREATE TABLE TwitterBase.ConfidenceTypes
@@ -64,8 +55,8 @@ CREATE TABLE TwitterBase.Sentiments
 
 CREATE TABLE TwitterBase.TweetSentiment
 (
-    TweetID bigint NOT NULL, -- FK
-    SentimentID int NOT NULL -- FK
+    TweetID bigint NOT NULL,
+    SentimentID int NOT NULL
     CONSTRAINT PK_TweetSentiment PRIMARY KEY
 	(
 		TweetID,
@@ -73,11 +64,10 @@ CREATE TABLE TwitterBase.TweetSentiment
 	)
 )
 
---------------------------------------Junction Tables
 CREATE TABLE TwitterBase.TweetConfidence
 (
-    TweetID bigint NOT NULL, -- FK
-    ConfidenceTypeID int NOT NULL, -- FK
+    TweetID bigint NOT NULL,
+    ConfidenceTypeID int NOT NULL,
     ConfidenceScore DECIMAL(3, 2) NOT NULL
     CONSTRAINT PK_TweetConfidence PRIMARY KEY
 	(
@@ -88,8 +78,8 @@ CREATE TABLE TwitterBase.TweetConfidence
 
 CREATE TABLE TwitterBase.TweetKeyPhrases
 (
-    TweetID bigint NOT NULL, -- FK
-    KeyPhraseID int NOT NULL -- FK
+    TweetID bigint NOT NULL, 
+    KeyPhraseID int NOT NULL
     CONSTRAINT PK_TweetKeyPhrases PRIMARY KEY
 	(
 		TweetID,
@@ -99,8 +89,8 @@ CREATE TABLE TwitterBase.TweetKeyPhrases
 
 CREATE TABLE TwitterBase.TweetHashtags
 (
-    TweetID bigint NOT NULL, -- FK
-    HashtagID int NOT NULL -- FK
+    TweetID bigint NOT NULL, 
+    HashtagID int NOT NULL 
     CONSTRAINT PK_TweetHashtags PRIMARY KEY
 	(
 		TweetID,
@@ -108,8 +98,6 @@ CREATE TABLE TwitterBase.TweetHashtags
 	)
 )
 
---------------------------------Adding Foreign Key Constraints
--- Tweets
 ALTER TABLE TwitterBase.Tweets
 ADD CONSTRAINT FK_Tweets1 FOREIGN KEY (TweetAuthorID)
 	REFERENCES TwitterBase.Users (UserID)
@@ -118,7 +106,6 @@ ALTER TABLE TwitterBase.Tweets
 ADD CONSTRAINT FK_Tweets2 FOREIGN KEY (LocationID)
     REFERENCES TwitterBase.Locations (LocationID)
 
--- TweetSentiment
 ALTER TABLE TwitterBase.TweetSentiment
 ADD CONSTRAINT FK_TweetSentiment1 FOREIGN KEY (TweetID)
 	REFERENCES TwitterBase.Tweets (TweetID)
@@ -127,7 +114,6 @@ ALTER TABLE TwitterBase.TweetSentiment
 ADD CONSTRAINT FK_TweetSentiment2 FOREIGN KEY (SentimentID)
 	REFERENCES TwitterBase.Sentiments (SentimentID)
 
--- TweetConfidence
 ALTER TABLE TwitterBase.TweetConfidence
 ADD CONSTRAINT FK_TweetConfidence1 FOREIGN KEY (TweetID)
     REFERENCES TwitterBase.Tweets (TweetID)
@@ -136,7 +122,6 @@ ALTER TABLE TwitterBase.TweetConfidence
 ADD CONSTRAINT FK_TweetConfidence3 FOREIGN KEY (ConfidenceTypeID)
     REFERENCES TwitterBase.ConfidenceTypes (ConfidenceTypeID)
 
--- TweetKeyPhrases
 ALTER TABLE TwitterBase.TweetKeyPhrases
 ADD CONSTRAINT FK_TweetKeyPhrases1 FOREIGN KEY (TweetID)
     REFERENCES TwitterBase.Tweets (TweetID)
@@ -145,7 +130,6 @@ ALTER TABLE TwitterBase.TweetKeyPhrases
 ADD CONSTRAINT FK_TweetKeyPhrases2 FOREIGN KEY (KeyPhraseID)
     REFERENCES TwitterBase.KeyPhrases (KeyPhraseID)
 
--- TweetHashtags
 ALTER TABLE TwitterBase.TweetHashtags
 ADD CONSTRAINT FK_TweetHashtags1 FOREIGN KEY (TweetID)
     REFERENCES TwitterBase.Tweets (TweetID)
@@ -155,7 +139,6 @@ ADD CONSTRAINT FK_TweetHashtags2 FOREIGN KEY (HashtagID)
     REFERENCES TwitterBase.Hashtags (HashtagID)
 
 
--------------------------------- Populating DB With Categories
 SET IDENTITY_INSERT TwitterBase.ConfidenceTypes ON
 INSERT INTO TwitterBase.ConfidenceTypes (ConfidenceTypeID, ConfidenceLabel)
 VALUES

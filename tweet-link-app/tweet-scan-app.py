@@ -108,12 +108,12 @@ def pull_topic_tweets(in_topic, token):
         ##############################
         # Adding Tweet to Table
         ##############################
-        data_uploader.addTweet(topic, tweet, user_id, location_id)
+        data_uploader.add_tweet(topic, tweet, user_id, location_id)
 
         ##############################
         # Finding Hashtags & Adding
         ##############################
-        data_uploader.addTweetTags(tweet)
+        data_uploader.add_tweet_tags(tweet)
 
         print("INFO: " + str(counter) + " out of " +
               str(len(tweet_list)) + " tweets pulled.")
