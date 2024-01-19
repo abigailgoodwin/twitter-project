@@ -66,6 +66,22 @@ class DataExporter:
 
         print("INFO: SQLite Database Successfully Configured.")
 
+    def verify_not_in_table(self, table_name, id_field_name, id) -> bool:
+        """
+        Verifies whether or not the given item is already in the database.
+
+        @param table_name: The name of the Table to check.
+        @param id_field_name: The name of the Primary Key's column.
+        @param id: The unique identifier to check against.
+
+        @return True if the item is not in the target table, or False otherwise.
+        """
+        sql_query = f"""
+            SELECT COUNT(*) FROM TwitterBase.{table_name} AS T WHERE T.{id_field_name} = {id}
+        """
+        rows = self.cursor.execute(sql_query)
+        return True if rows.fetchall() is None else False
+
     def add_user(self, author):
         """
         Adds the user that wrote the given tweet to the Users table.
@@ -74,14 +90,10 @@ class DataExporter:
         @return userID: the primary key for the newly created author.
         """
         # First, verify that the author isn't already in the DB:
-        sql_query = f"""
-            SELECT COUNT(*) FROM TwitterBase.Users AS U WHERE U.AuthorID = {author[id]}
-        """
-        rows = self.cursor.execute(sql_query)
-        rows.fetchall()
+        not_in_table = self.verify_not_in_table(
+            "Users", "AuthorID", author['id'])
 
-        # Only inserts the author if they don't exist in the DB:
-        if rows is None:
+        if not_in_table:
             # Below query insert the new author:
             sql_query = f"""
             INSERT INTO TwitterBase.Users (AuthorID, UserHandle, UserName)
@@ -97,7 +109,7 @@ class DataExporter:
         """
         rows = self.cursor.execute(sql_query)
         rows.fetchone()
-        created_user_ID = rows[0][0]
+        created_user_ID = rows[0]
 
         return created_user_ID
 
@@ -108,14 +120,10 @@ class DataExporter:
         @param tweet: A tweet.
         @return created_location_id: Primary key for the newly created Locations row.
         """
-        sql_query = f"""
-            SELECT COUNT(*) FROM TwitterBase.Locations AS L WHERE L.LocationCode = {place['id']}
-        """
-        rows = self.cursor.execute(sql_query)
-        rows.fetchall()
+        not_in_table = self.verify_not_in_table(
+            "Locations", "LocationCode", place['id'])
 
-        # Only insert the location if it doesn't already exist in the DB:
-        if rows is None:
+        if not_in_table:
             # Below query inserts the new location:
             sql_query = f"""
             INSERT INTO TwitterBase.Locations (LocationCode, LocationName)
@@ -130,7 +138,7 @@ class DataExporter:
         """
         rows = self.cursor.execute(sql_query)
         rows.fetchone()
-        created_location_id = rows[0][0]
+        created_location_id = rows[0]
 
         return created_location_id
 
@@ -149,22 +157,17 @@ class DataExporter:
         # locationID: The location ID (should have been created, passed in as param)
 
         # Verify that this exact Tweet isn't already in the DB:
-        sql_query = f"""
-            SELECT COUNT(*) FROM TwitterBase.Tweets AS T Where T.TweetID = {tweet['id']}
-        """
-        rows = self.cursor.execute(sql_query)
-        rows.fetchall()
+        not_in_table = self.verify_not_in_table(
+            "Tweets", "TweetID", tweet['id'])
 
-        # Insert the new Tweet:
-        if rows is None:
-
+        if not_in_table:
             # Convert the Tweet's creation date to a datetime object:
             sql_query = f"""
                 CONVERT(DATETIME, {tweet['created_at']})
             """
             rows = self.cursor.execute(sql_query)
             rows.fetchone()
-            date_time = rows[0][0]
+            date_time = rows[0]
 
             # Inser the Tweet into the table:
             sql_query = f"""
@@ -186,14 +189,11 @@ class DataExporter:
         tag_list = collect_hashtags(tweet)
         for tag in tag_list:
             # Verify that the Hashtag is not in the table already:
-            sql_query = f"""
-                SELECT COUNT(*) FROM TwitterBase.Hashtags AS H WHERE H.HashtagText = {tag}
-            """
-            rows = self.cursor.execute(sql_query)
-            rows.fetchall()
+            not_in_table = self.verify_not_in_table(
+                "Hashtags", "HashtagText", tag)
 
             # Insert the new tag:
-            if rows is None:
+            if not_in_table:
                 sql_query = f"""
                     INSERT INTO TwitterBase.Hashtags (HashtagText)
                     VALUES
@@ -208,7 +208,7 @@ class DataExporter:
             """
             rows = self.cursor.execute(sql_query)
             rows.fetchone()
-            hashtag_id = rows[0][0]
+            hashtag_id = rows[0]
 
             # Check if this Tweet has already been mapped to this hashtag:
             sql_query = f"""
@@ -234,13 +234,49 @@ class DataExporter:
         @param tweet_info: Python dictionary that contains the tweet's id, sentiment, confidence scores, and keywords.
         @return void
         """
-        sql_query = """
-        EXEC TwitterBase.InsertSentimentInfo ?,?,?,?,?
+
+        # Verify that the Tweet has not already been mapped to a sentiment:
+        not_in_table = self.verify_not_in_table(
+            "TweetSentiment", "TweetID", tweet_info['id'])
+
+        if not_in_table:
+            # Convert the Tweet's sentiment to an integer:
+            sentiments = {
+                "positive": 1,
+                "neutral": 2,
+                "mixed": 3,
+                "negative": 4
+            }
+            tweet_sentiment = sentiments[tweet_info['overall_sentiment']]
+
+            # Map the Tweet to its overall sentiment:
+            sql_query = f"""
+                INSERT INTO TwitterBase.TweetSentiment (TweetID, SentimentID)
+                VALUES
+                    ({tweet_info['id']}, {tweet_sentiment})
+            """
+            self.cursor.execute(sql_query)
+            self.connection.commit()
+
+        # Verify that the Tweet has not already been mapped to its Confidence values:
+        sql_query = f"""
+            SELECT COUNT(*) FROM TwitterBase.TweetConfidence AS TC WHERE TC.TweetID = {tweet_info['id']}
         """
-        args = (int(tweet_info['id']), tweet_info['overall_sentiment'], tweet_info['confidence_scores']
-                ['positive'], tweet_info['confidence_scores']['neutral'], tweet_info['confidence_scores']['negative'])
-        self.cursor.execute(sql_query, args)
-        self.connection.commit()
+        rows = self.cursor.execute(sql_query)
+        rows.fetchall()
+
+        # There are three confidence values to track, so check if we have them:
+        if len(rows) < 3:
+            # Insert the Tweet's confidence scores for its assigned sentiment(s):
+            sql_query = f"""
+                INSERT INTO TwitterBase.TweetConfidence (TweetID, ConfidenceTypeID, ConfidenceScore)
+                VALUES
+                    ({tweet_info['id']}, 1, {tweet_info['confidence_scores']['positive']}),
+                    ({tweet_info['id']}, 2, {tweet_info['confidence_scores']['neutral']}),
+                    ({tweet_info['id']}, 3, {tweet_info['confidence_scores']['negative']})
+            """
+            self.cursor.execute(sql_query)
+            self.connection.commit()
 
     def add_tweet_keywords(self, tweet_info, topic):
         """
@@ -253,23 +289,46 @@ class DataExporter:
         tweet_id = tweet_info['id']
 
         for phrase in keyword_list:
-            # We don't want the topic as a keyword.
+            # We don't want the topic as a keyword. Have to filter for case here, as well.
             if (topic not in phrase and topic.lower() not in phrase and topic.upper() not in phrase):
-                # Step 1: Insert Key Phrase Into DB
-                sql_query = """
-                DECLARE @created_keyphrase_ID int
-                EXEC TwitterBase.InsertKeyPhrase ?,?, @KeyPhraseID = @created_keyphrase_ID OUTPUT
-                SELECT @created_keyphrase_ID
+
+                # Step 1: Insert Key Phrase Into DB if not already in the table:
+                not_in_table = self.verify_not_in_table(
+                    "KeyPhrases", "KeyPhraseText", phrase)
+
+                if not_in_table:
+                    sql_query = f"""
+                    INSERT INTO TwitterBase.KeyPhrases (KeyPhraseText)
+                    VALUES
+                        ({phrase})
+                    """
+                    self.cursor.execute(sql_query)
+                    self.connection.commit()
+
+                # Get the phrase's unique identifier in the KeyPhrases table:
+                sql_query = f"""
+                SELECT KeyPhraseID FROM TwitterBase.KeyPhrases AS KP WHERE KP.KeyPhraseText = {phrase}
                 """
-                args = (int(tweet_id), phrase)
-                self.cursor.execute(sql_query, args)
-                rows = self.cursor.fetchall()
-                created_phrase_ID = rows[0][0]
-                # Step 2: Insert Into Junction Table
-                sql_query = """EXEC TwitterBase.InsertTweetKeyPhrases ?,?"""
-                args = (int(tweet_id), int(created_phrase_ID))
-                self.cursor.execute(sql_query, args)
-                self.connection.commit()
+                rows = self.cursor.execute(sql_query)
+                rows.fetchone()
+                created_phrase_ID = rows[0]
+
+                # Lastly, check if the Tweet was already mapped to this phrase:
+                sql_query = f"""
+                    SELECT COUNT(*) FROM TwitterBase.TweetKeyPhrases WHERE TweetID = {tweet_id} AND KeyPhraseID = {created_phrase_ID}
+                """
+                rows = self.cursor.execute(sql_query)
+                rows.fetchall()
+
+                if rows is None:
+                    # Map the Tweet to the Key Phrase:
+                    sql_query = f"""
+                        INSERT INTO TwitterBase.TweetKeyPhrases (TweetID, KeyPhraseID)
+                        VALUES
+                            ({tweet_id}, {created_phrase_ID})
+                    """
+                    self.cursor.execute(sql_query)
+                    self.connection.commit()
 
     def check_existing_tweets(self, tweet_list):
         """
@@ -281,15 +340,14 @@ class DataExporter:
         new_tweet_list = []
 
         for tweet in tweet_list:
-            sql_query = """
-            SELECT COUNT(*) FROM TwitterBase.Tweets AS T WHERE T.TweetID = ?
+            sql_query = f"""
+            SELECT COUNT(*) FROM TwitterBase.Tweets AS T WHERE T.TweetID = {tweet['id']}
             """
-            args = (int(tweet['id']))
-            self.cursor.execute(sql_query, args)
-            rows = self.cursor.fetchall()
+            rows = self.cursor.execute(sql_query)
+            rows.fetchall()
             num_existing = int(rows[0][0])
 
-            if (num_existing == 0):
+            if num_existing == 0:
                 new_tweet_list.append(tweet)
 
         return new_tweet_list
