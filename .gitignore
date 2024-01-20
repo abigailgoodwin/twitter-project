@@ -1,0 +1,8 @@
+# Ignore any Python environments:
+fresh-env
+
+# Ignore any pycache folders:
+**/__pycache__
+
+# Ignore any generated databases:
+*.db
