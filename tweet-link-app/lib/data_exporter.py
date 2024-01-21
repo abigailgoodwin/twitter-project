@@ -22,7 +22,7 @@ class DataExporter:
         Constructor. Opens up a connection to the database when the object is called (and used).
         """
         # Path to the project's sql folder:
-        self.sql_path = os.path.realpath("../../sql/")
+        self.sql_path = os.path.realpath("sql/")
 
         # Create the TwitterBase SQLite DB in the SQL folder:
         self.connection = sqlite3.connect(
@@ -35,7 +35,7 @@ class DataExporter:
         self.create_tables()
 
         print(
-            f"INFO: Connection opened to SQLite Database at {self.sql_path}/TwitterBase.db.")
+            f"INFO: Connection opened to SQLite Database at {self.sql_path}/db.")
 
     def __del__(self):
         """
@@ -77,7 +77,7 @@ class DataExporter:
         @return True if the item is not in the target table, or False otherwise.
         """
         sql_query = f"""
-            SELECT COUNT(*) FROM TwitterBase.{table_name} AS T WHERE T.{id_field_name} = {id}
+            SELECT COUNT(*) FROM {table_name} AS T WHERE T.{id_field_name} = {id}
         """
         rows = self.cursor.execute(sql_query)
         return True if rows.fetchall() is None else False
@@ -96,7 +96,7 @@ class DataExporter:
         if not_in_table:
             # Below query insert the new author:
             sql_query = f"""
-            INSERT INTO TwitterBase.Users (AuthorID, UserHandle, UserName)
+            INSERT INTO Users (AuthorID, UserHandle, UserName)
             VALUES
                 ({author['id']}, {author['username']}, {author['name']})
             """
@@ -105,7 +105,7 @@ class DataExporter:
 
         # Grab the author's unique identifier (PK) from the DB:
         sql_query = f"""
-        SELECT UserID FROM TwitterBase.Users WHERE AuthorID = {author['id']}
+        SELECT UserID FROM Users WHERE AuthorID = {author['id']}
         """
         rows = self.cursor.execute(sql_query)
         rows.fetchone()
@@ -126,7 +126,7 @@ class DataExporter:
         if not_in_table:
             # Below query inserts the new location:
             sql_query = f"""
-            INSERT INTO TwitterBase.Locations (LocationCode, LocationName)
+            INSERT INTO Locations (LocationCode, LocationName)
             VALUES
             ({place['id']}, {place['full_name']})
             """
@@ -134,7 +134,7 @@ class DataExporter:
             self.connection.commit()
 
         sql_query = f"""
-            SELECT LocationID FROM TwitterBase.Locations WHERE LocationCode = {place['id']}
+            SELECT LocationID FROM Locations WHERE LocationCode = {place['id']}
         """
         rows = self.cursor.execute(sql_query)
         rows.fetchone()
@@ -171,7 +171,7 @@ class DataExporter:
 
             # Inser the Tweet into the table:
             sql_query = f"""
-                INSERT INTO TwitterBase.Tweets (TweetID, TweetAuthorID, LocationID, TweetDate, TweetBody, TweetJSON, TweetTopic)
+                INSERT INTO Tweets (TweetID, TweetAuthorID, LocationID, TweetDate, TweetBody, TweetJSON, TweetTopic)
                 VALUES
                     ({tweet['id']}, {tweet_author_id}, {location_id if not None else "NULL"}, {date_time}, {tweet['text']}, {tweet}, {topic})
             """
@@ -195,7 +195,7 @@ class DataExporter:
             # Insert the new tag:
             if not_in_table:
                 sql_query = f"""
-                    INSERT INTO TwitterBase.Hashtags (HashtagText)
+                    INSERT INTO Hashtags (HashtagText)
                     VALUES
                         ({tag})
                 """
@@ -204,7 +204,7 @@ class DataExporter:
 
             # Query for the hashtag's ID from the hashtag table:
             sql_query = f"""
-                SELECT HashtagID FROM TwitterBase.Hashtags AS H WHERE H.HashtagText = {tag}
+                SELECT HashtagID FROM Hashtags AS H WHERE H.HashtagText = {tag}
             """
             rows = self.cursor.execute(sql_query)
             rows.fetchone()
@@ -212,7 +212,7 @@ class DataExporter:
 
             # Check if this Tweet has already been mapped to this hashtag:
             sql_query = f"""
-                SELECT COUNT(*) FROM TwitterBase.TweetHashtags AS TH WHERE TH.TweetID = {tweet['id']} AND TH.HashtagID = {hashtag_id}
+                SELECT COUNT(*) FROM TweetHashtags AS TH WHERE TH.TweetID = {tweet['id']} AND TH.HashtagID = {hashtag_id}
             """
             rows = self.cursor.execute(sql_query)
             rows.fetchall()
@@ -220,7 +220,7 @@ class DataExporter:
             # Only insert the new mapping if not already in the table:
             if rows is None:
                 sql_query = f"""
-                    INSERT INTO TwitterBase.TweetHashtags (TweetID, HashtagID)
+                    INSERT INTO TweetHashtags (TweetID, HashtagID)
                     VALUES
                         ({tweet['id']}, {hashtag_id})
                 """
@@ -251,7 +251,7 @@ class DataExporter:
 
             # Map the Tweet to its overall sentiment:
             sql_query = f"""
-                INSERT INTO TwitterBase.TweetSentiment (TweetID, SentimentID)
+                INSERT INTO TweetSentiment (TweetID, SentimentID)
                 VALUES
                     ({tweet_info['id']}, {tweet_sentiment})
             """
@@ -260,7 +260,7 @@ class DataExporter:
 
         # Verify that the Tweet has not already been mapped to its Confidence values:
         sql_query = f"""
-            SELECT COUNT(*) FROM TwitterBase.TweetConfidence AS TC WHERE TC.TweetID = {tweet_info['id']}
+            SELECT COUNT(*) FROM TweetConfidence AS TC WHERE TC.TweetID = {tweet_info['id']}
         """
         rows = self.cursor.execute(sql_query)
         rows.fetchall()
@@ -269,7 +269,7 @@ class DataExporter:
         if len(rows) < 3:
             # Insert the Tweet's confidence scores for its assigned sentiment(s):
             sql_query = f"""
-                INSERT INTO TwitterBase.TweetConfidence (TweetID, ConfidenceTypeID, ConfidenceScore)
+                INSERT INTO TweetConfidence (TweetID, ConfidenceTypeID, ConfidenceScore)
                 VALUES
                     ({tweet_info['id']}, 1, {tweet_info['confidence_scores']['positive']}),
                     ({tweet_info['id']}, 2, {tweet_info['confidence_scores']['neutral']}),
@@ -298,7 +298,7 @@ class DataExporter:
 
                 if not_in_table:
                     sql_query = f"""
-                    INSERT INTO TwitterBase.KeyPhrases (KeyPhraseText)
+                    INSERT INTO KeyPhrases (KeyPhraseText)
                     VALUES
                         ({phrase})
                     """
@@ -307,7 +307,7 @@ class DataExporter:
 
                 # Get the phrase's unique identifier in the KeyPhrases table:
                 sql_query = f"""
-                SELECT KeyPhraseID FROM TwitterBase.KeyPhrases AS KP WHERE KP.KeyPhraseText = {phrase}
+                SELECT KeyPhraseID FROM KeyPhrases AS KP WHERE KP.KeyPhraseText = {phrase}
                 """
                 rows = self.cursor.execute(sql_query)
                 rows.fetchone()
@@ -315,7 +315,7 @@ class DataExporter:
 
                 # Lastly, check if the Tweet was already mapped to this phrase:
                 sql_query = f"""
-                    SELECT COUNT(*) FROM TwitterBase.TweetKeyPhrases WHERE TweetID = {tweet_id} AND KeyPhraseID = {created_phrase_ID}
+                    SELECT COUNT(*) FROM TweetKeyPhrases WHERE TweetID = {tweet_id} AND KeyPhraseID = {created_phrase_ID}
                 """
                 rows = self.cursor.execute(sql_query)
                 rows.fetchall()
@@ -323,7 +323,7 @@ class DataExporter:
                 if rows is None:
                     # Map the Tweet to the Key Phrase:
                     sql_query = f"""
-                        INSERT INTO TwitterBase.TweetKeyPhrases (TweetID, KeyPhraseID)
+                        INSERT INTO TweetKeyPhrases (TweetID, KeyPhraseID)
                         VALUES
                             ({tweet_id}, {created_phrase_ID})
                     """
@@ -341,7 +341,7 @@ class DataExporter:
 
         for tweet in tweet_list:
             sql_query = f"""
-            SELECT COUNT(*) FROM TwitterBase.Tweets AS T WHERE T.TweetID = {tweet['id']}
+            SELECT COUNT(*) FROM Tweets AS T WHERE T.TweetID = {tweet['id']}
             """
             rows = self.cursor.execute(sql_query)
             rows.fetchall()

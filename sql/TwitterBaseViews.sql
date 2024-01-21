@@ -4,7 +4,7 @@ AS
     SELECT DISTINCT
         T.TweetID
     FROM
-        TwitterBase.Tweets AS T
+        Tweets AS T
 )
 SELECT
     COUNT(*)
@@ -13,7 +13,7 @@ FROM
 
 
 GO
-CREATE OR ALTER VIEW TwitterBase.TweetUserView
+CREATE OR ALTER VIEW TweetUserView
 AS
     SELECT DISTINCT
         T.TweetTopic,
@@ -25,28 +25,28 @@ AS
         T.TweetJSON
 
     FROM
-        TwitterBase.Tweets AS T
-        INNER JOIN TwitterBase.Users AS U
+        Tweets AS T
+        INNER JOIN Users AS U
             ON T.TweetAuthorID = U.UserID
-        LEFT JOIN TwitterBase.Locations AS L
+        LEFT JOIN Locations AS L
             ON T.LocationID = L.LocationID
 
 GO
-CREATE OR ALTER VIEW TwitterBase.TweetTagView
+CREATE OR ALTER VIEW TweetTagView
 AS
     SELECT
         T.TweetID,
         H.HashtagText
 
     FROM
-        TwitterBase.Tweets AS T
-        INNER JOIN TwitterBase.TweetHashtags AS TH
+        Tweets AS T
+        INNER JOIN TweetHashtags AS TH
             ON T.TweetID = TH.TweetID
-        INNER JOIN TwitterBase.Hashtags AS H
+        INNER JOIN Hashtags AS H
             ON TH.HashtagID = H.HashtagID
 
 GO
-CREATE OR ALTER VIEW TwitterBase.TweetSentimentView
+CREATE OR ALTER VIEW TweetSentimentView
 AS
     WITH TweetConTable
     AS
@@ -57,12 +57,12 @@ AS
             CT.ConfidenceLabel,
             TC.ConfidenceScore
         FROM
-            TwitterBase.TweetSentiment AS TS
-            INNER JOIN TwitterBase.Sentiments AS S
+            TweetSentiment AS TS
+            INNER JOIN Sentiments AS S
                 ON TS.SentimentID = S.SentimentID
-            INNER JOIN TwitterBase.TweetConfidence AS TC
+            INNER JOIN TweetConfidence AS TC
                 ON TS.TweetID = TC.TweetID
-            INNER JOIN TwitterBase.ConfidenceTypes AS CT
+            INNER JOIN ConfidenceTypes AS CT
                 ON TC.ConfidenceTypeID = CT.ConfidenceTypeID
     )
     SELECT
@@ -81,83 +81,83 @@ AS
         ) AS PVT
 
 GO
-CREATE OR ALTER VIEW TwitterBase.TweetPhraseView
+CREATE OR ALTER VIEW TweetPhraseView
 AS
     SELECT
         TKP.TweetID,
         KP.KeyPhraseText
 
     FROM
-        TwitterBase.TweetKeyPhrases AS TKP
-        INNER JOIN TwitterBase.KeyPhrases AS KP
+        TweetKeyPhrases AS TKP
+        INNER JOIN KeyPhrases AS KP
             ON TKP.KeyPhraseID = KP.KeyPhraseID
 
 GO
-CREATE OR ALTER VIEW TwitterBase.NegativeTweets
+CREATE OR ALTER VIEW NegativeTweets
 AS
     SELECT
         T.TweetID,
         T.TweetTopic
 
     FROM
-        TwitterBase.TweetSentiment AS TS
-        INNER JOIN TwitterBase.Sentiments AS S
+        TweetSentiment AS TS
+        INNER JOIN Sentiments AS S
             ON TS.SentimentID = S.SentimentID
-        INNER JOIN TwitterBase.Tweets AS T
+        INNER JOIN Tweets AS T
             ON TS.TweetID = T.TweetID
 
     WHERE
         S.SentimentName = 'negative'
 
 GO
-CREATE OR ALTER VIEW TwitterBase.AbortionTweets
+CREATE OR ALTER VIEW AbortionTweets
 AS
     SELECT
         *
     
     FROM
-        TwitterBase.Tweets
+        Tweets
 
     WHERE
         TweetTopic = 'Abortion'
 
 GO
-CREATE OR ALTER VIEW TwitterBase.GunControlTweets
+CREATE OR ALTER VIEW GunControlTweets
 AS
     SELECT
         *
     
     FROM
-        TwitterBase.Tweets
+        Tweets
 
     WHERE
         TweetTopic = 'Gun Control'
 
 GO
-CREATE OR ALTER VIEW TwitterBase.VaccineTweets
+CREATE OR ALTER VIEW VaccineTweets
 AS
     SELECT
         *
     
     FROM
-        TwitterBase.Tweets
+        Tweets
 
     WHERE
         TweetTopic = 'Vaccine'
 
 
 GO
-CREATE OR ALTER VIEW TwitterBase.PositiveTweets
+CREATE OR ALTER VIEW PositiveTweets
 AS
     SELECT
         T.TweetID,
         T.TweetTopic
     
     FROM
-        TwitterBase.TweetSentiment AS TS
-        INNER JOIN TwitterBase.Sentiments AS S
+        TweetSentiment AS TS
+        INNER JOIN Sentiments AS S
             ON TS.SentimentID = S.SentimentID
-        INNER JOIN TwitterBase.Tweets AS T
+        INNER JOIN Tweets AS T
             ON TS.TweetID = T.TweetID
 
     WHERE
@@ -165,24 +165,24 @@ AS
 
 
 GO
-CREATE OR ALTER VIEW TwitterBase.TweetDominantConfidenceScore
+CREATE OR ALTER VIEW TweetDominantConfidenceScore
 AS
     SELECT
         TC.TweetID,
         MAX(TC.ConfidenceScore) AS [Score]
     
     FROM
-        TwitterBase.TweetConfidence AS TC
-        INNER JOIN TwitterBase.TweetSentiment AS TS
+        TweetConfidence AS TC
+        INNER JOIN TweetSentiment AS TS
             ON TC.TweetID = TS.TweetID
-        INNER JOIN TwitterBase.ConfidenceTypes AS CT
+        INNER JOIN ConfidenceTypes AS CT
             ON TC.ConfidenceTypeID = CT.ConfidenceTypeID
 
     GROUP BY
         TC.TweetID
 
 GO
-SELECT * FROM TwitterBase.TweetUserView ORDER BY TweetTopic, LocationName DESC
-SELECT * FROM TwitterBase.TweetTagView
-SELECT * FROM TwitterBase.TweetSentimentView
-SELECT * FROM TwitterBase.TweetPhraseView
+SELECT * FROM TweetUserView ORDER BY TweetTopic, LocationName DESC
+SELECT * FROM TweetTagView
+SELECT * FROM TweetSentimentView
+SELECT * FROM TweetPhraseView

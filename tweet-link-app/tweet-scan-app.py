@@ -167,6 +167,8 @@ def pull_topic(in_topic, num_desired):
 #   Main
 ############################################################
 def main():
+    data_uploader = DataExporter()
+
     first_topic = input("Enter in your first topic: ")
     pull_topic(first_topic, 500)
     second_topic = input("Enter in your second topic: ")
