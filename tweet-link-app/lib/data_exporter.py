@@ -54,7 +54,7 @@ class DataExporter:
         """
         # List of SQL files to execute:
         sql_files = ["TwitterBase.sql",
-                     "TwitterBaseViews.sql", "TwitterProcs.sql"]
+                     "TwitterBaseViews.sql"]
 
         # Execute each script using SQLite:
         for sql_file_path in sql_files:

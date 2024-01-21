@@ -105,11 +105,11 @@ INSERT INTO ConfidenceTypes (ConfidenceTypeID, ConfidenceLabel)
 VALUES
     (1, 'positive'),
     (2, 'neutral'),
-    (3, 'negative')
+    (3, 'negative');
 
 INSERT INTO Sentiments (SentimentID, SentimentName)
 VALUES
     (1, 'positive'),
     (2, 'neutral'),
     (3, 'mixed'),
-    (4, 'negative')
+    (4, 'negative');

@@ -1,3 +1,13 @@
+DROP VIEW IF EXISTS TweetUserView;
+DROP VIEW IF EXISTS TweetTagView;
+DROP VIEW IF EXISTS TweetPhraseView;
+DROP VIEW IF EXISTS NegativeTweets;
+DROP VIEW IF EXISTS AbortionTweets;
+DROP VIEW IF EXISTS GunControlTweets;
+DROP VIEW IF EXISTS VaccineTweets;
+DROP VIEW IF EXISTS PositiveTweets;
+DROP VIEW IF EXISTS TweetDominantConfidenceScore;
+
 WITH DistinctTweets
 AS
 (
@@ -9,11 +19,9 @@ AS
 SELECT
     COUNT(*)
 FROM
-    DistinctTweets
+    DistinctTweets;
 
-
-GO
-CREATE OR ALTER VIEW TweetUserView
+CREATE VIEW TweetUserView
 AS
     SELECT DISTINCT
         T.TweetTopic,
@@ -29,10 +37,9 @@ AS
         INNER JOIN Users AS U
             ON T.TweetAuthorID = U.UserID
         LEFT JOIN Locations AS L
-            ON T.LocationID = L.LocationID
+            ON T.LocationID = L.LocationID;
 
-GO
-CREATE OR ALTER VIEW TweetTagView
+CREATE VIEW TweetTagView
 AS
     SELECT
         T.TweetID,
@@ -43,45 +50,43 @@ AS
         INNER JOIN TweetHashtags AS TH
             ON T.TweetID = TH.TweetID
         INNER JOIN Hashtags AS H
-            ON TH.HashtagID = H.HashtagID
+            ON TH.HashtagID = H.HashtagID;
 
-GO
-CREATE OR ALTER VIEW TweetSentimentView
-AS
-    WITH TweetConTable
-    AS
-    (
-        SELECT
-            TS.TweetID,
-            S.SentimentName,
-            CT.ConfidenceLabel,
-            TC.ConfidenceScore
-        FROM
-            TweetSentiment AS TS
-            INNER JOIN Sentiments AS S
-                ON TS.SentimentID = S.SentimentID
-            INNER JOIN TweetConfidence AS TC
-                ON TS.TweetID = TC.TweetID
-            INNER JOIN ConfidenceTypes AS CT
-                ON TC.ConfidenceTypeID = CT.ConfidenceTypeID
-    )
-    SELECT
-        PVT.TweetID,
-        PVT.SentimentName AS [OverallSentiment],
-        PVT.[positive],
-        PVT.[neutral],
-        PVT.[negative]
+-- CREATE VIEW TweetSentimentView
+-- AS
+--     WITH TweetConTable
+--     AS
+--     (
+--         SELECT
+--             TS.TweetID,
+--             S.SentimentName,
+--             CT.ConfidenceLabel,
+--             TC.ConfidenceScore
+--         FROM
+--             TweetSentiment AS TS
+--             INNER JOIN Sentiments AS S
+--                 ON TS.SentimentID = S.SentimentID
+--             INNER JOIN TweetConfidence AS TC
+--                 ON TS.TweetID = TC.TweetID
+--             INNER JOIN ConfidenceTypes AS CT
+--                 ON TC.ConfidenceTypeID = CT.ConfidenceTypeID
+--     )
+--     SELECT
+--         PVT.TweetID,
+--         PVT.SentimentName AS [OverallSentiment],
+--         PVT.[positive],
+--         PVT.[neutral],
+--         PVT.[negative]
 
-    FROM
-        TweetConTable AS TC
-        PIVOT
-        (
-            MAX(TC.ConfidenceScore)
-            FOR TC.ConfidenceLabel IN ([positive], [neutral], [negative])
-        ) AS PVT
+--     FROM
+--         TweetConTable AS TC
+--         PIVOT
+--         (
+--             MAX(TC.ConfidenceScore)
+--             FOR TC.ConfidenceLabel IN ([positive], [neutral], [negative])
+--         ) AS PVT;
 
-GO
-CREATE OR ALTER VIEW TweetPhraseView
+CREATE VIEW TweetPhraseView
 AS
     SELECT
         TKP.TweetID,
@@ -90,10 +95,9 @@ AS
     FROM
         TweetKeyPhrases AS TKP
         INNER JOIN KeyPhrases AS KP
-            ON TKP.KeyPhraseID = KP.KeyPhraseID
+            ON TKP.KeyPhraseID = KP.KeyPhraseID;
 
-GO
-CREATE OR ALTER VIEW NegativeTweets
+CREATE VIEW NegativeTweets
 AS
     SELECT
         T.TweetID,
@@ -107,10 +111,9 @@ AS
             ON TS.TweetID = T.TweetID
 
     WHERE
-        S.SentimentName = 'negative'
+        S.SentimentName = 'negative';
 
-GO
-CREATE OR ALTER VIEW AbortionTweets
+CREATE VIEW AbortionTweets
 AS
     SELECT
         *
@@ -119,10 +122,9 @@ AS
         Tweets
 
     WHERE
-        TweetTopic = 'Abortion'
+        TweetTopic = 'Abortion';
 
-GO
-CREATE OR ALTER VIEW GunControlTweets
+CREATE VIEW GunControlTweets
 AS
     SELECT
         *
@@ -131,10 +133,9 @@ AS
         Tweets
 
     WHERE
-        TweetTopic = 'Gun Control'
+        TweetTopic = 'Gun Control';
 
-GO
-CREATE OR ALTER VIEW VaccineTweets
+CREATE VIEW VaccineTweets
 AS
     SELECT
         *
@@ -143,11 +144,10 @@ AS
         Tweets
 
     WHERE
-        TweetTopic = 'Vaccine'
+        TweetTopic = 'Vaccine';
 
 
-GO
-CREATE OR ALTER VIEW PositiveTweets
+CREATE VIEW PositiveTweets
 AS
     SELECT
         T.TweetID,
@@ -161,11 +161,10 @@ AS
             ON TS.TweetID = T.TweetID
 
     WHERE
-        S.SentimentName = 'positive'
+        S.SentimentName = 'positive';
 
 
-GO
-CREATE OR ALTER VIEW TweetDominantConfidenceScore
+CREATE VIEW TweetDominantConfidenceScore
 AS
     SELECT
         TC.TweetID,
@@ -179,10 +178,4 @@ AS
             ON TC.ConfidenceTypeID = CT.ConfidenceTypeID
 
     GROUP BY
-        TC.TweetID
-
-GO
-SELECT * FROM TweetUserView ORDER BY TweetTopic, LocationName DESC
-SELECT * FROM TweetTagView
-SELECT * FROM TweetSentimentView
-SELECT * FROM TweetPhraseView
+        TC.TweetID;
