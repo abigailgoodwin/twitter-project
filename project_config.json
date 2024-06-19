@@ -1,0 +1,10 @@
+{
+    "twitter-api-info": {
+        "bearer-token": "",
+        "user-agent": ""
+    },
+    "azure-info":
+    {
+        "key": ""
+    }
+}

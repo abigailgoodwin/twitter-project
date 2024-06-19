@@ -1,36 +1,45 @@
-Overview: Tweet Analysis Project
-================================
-This project, which I informally call the "Twitter Project," is a project that I did while learning some advanced database concepts. In short, it's goal is to:
-* Allow the user to pick 3 topics.
-* For each topic, 1,000 tweets are pulled down and stored into a local relational database.
-* Each tweet is then run through Azure Cognitive Services to determine its overall sentiment and keywords.
-* This sentiment analysis is then stored alongside its associated tweet in the database.
-* At the end of the day, a PowerBI dashboard is generated that gives an overview of the results.
-Naturally, there's a lot that went into it, so I'll be covering it in more detail below.
+# Overview: Tweet Analysis Project
 
-How Do I Run the Project?
-=========================
-At this point, I haven't formally applied any build tools. This means you're going to have to set up a virtual environment able to run this guy. You'll find the dependencies for this project in ```requirements.txt```.
+## 50,000 Foot View
 
-> DISCLAIMER: The project will not run until after you've populated all of the database connection, Twitter API endpoint, and Azure Services endpoint information.
+In short, this project is a Python application that prompts users for three topics. The application then uses Twitter's API to grab 1,000 Tweets related to each topic and stores them in a local database. At this point, these Tweets are pushed through Microsoft's Cognitive Services to determine their overall sentiment (positive, neutral, negative) and any significant keywords. Once this data is aggregated, a PowerBI dashboard imports the database's rows to create a visualization of the data retrieved.
 
-After you've done the above, you can run it by simply:
-1. Navigate to the folder where ```TweetScanApp.py``` is.
-2. Then, simply run from the terminal ```./TweetScanApp.py```.
-3. The program will then take over and prompt you, via the terminal, for your topics.
+## Topics Demonstrated
 
-PowerBI Notes
-=============
-As part of this project, I generated a PowerBI dashboard to visualize the data that I got back. This dashboard included:
-* The top keywords across all three topics.
-* The top 10 keywords for the negative and positive tweets for each category.
-* The distribution of sentiments per each topic (i.e. what % of tweets were rated negative, positive, or mixed).
-* And the distribution of confidence scores, provided by Azure, for each topic (on a scale of 0.00 to 1.00).
+This project demonstrates my knowledge of relational database design and implementation. Along the way, a few other concepts are also demonstrated:
 
->**It's also worth noting that, at the time, I had already chosen my topics. The included PowerBI file and some SQL views reflect those topics.**
+- Usage of Twitter's API to retrieve "Tweets" on user-selected topics.
+- Usage of Microsoft's Cognitive Services to analyze the sentiment of a piece of text.
+- Usage of Microsoft's Cognitive Services to determine keywords in a piece of text.
+- Usage of PowerBI to visualize the overall sentiment for the Tweets retrieved on a specific topic.
+- Usage of PowerBI to create word maps for each topic's most common keywords.
 
-Other Notes
-===========
-* I've uploaded this to be a reference to my knowledge, not be a public application.
-* For that reason, it's not in a "user-friendly" working state, as it has a) no build tools attached and b) all critical endpoints and connection info unimplemented.
-* In the future, I may decide to turn this into a full-fledged application. But don't expect that any time soon!
+# How Do I Run the Project?
+
+## Required Tools/Packages
+
+To run this application, it is assumed that you have:
+
+- Python 3.8 or Greater
+- pip 20.0 or Greater (typically installed with the above)
+- Access to your own hosted SQL Database
+- Access to a Twitter API endpoint
+- Access to an Azure Services endpoint
+
+## Step 1: Install the Project Dependencies
+
+The first step to running this application is to install its required dependencies.
+
+1. Open a terminal in this project's root folder (`twitter-project/`).
+2. Run the following command: `pip install -r requirements.txt`. This will install this project's dependencies.
+
+## Step 2: Run the App
+
+At this point, you should have the prerequisite packages to run this app.
+
+1. Open a terminal in the `tweet-link-app/` directory.
+2. Run the following command: `python3 ./TweetScanApp.py`. This should start up the application for you.
+
+## Step 3: Using the App
+
+TODO
