@@ -38,7 +38,12 @@ def pull_topic_tweets(in_topic, token):
     response = twitter_importer.fetch_tweets(query_params)
 
     # Should allow us to get the next page of tweets...
-    next_token = response['meta']['next_token']
+    next_token = None
+    try:
+        next_token = response['meta']['next_token']
+    except:
+        print("Invalid X API credentials provided.")
+        exit(1)
 
     ############################################################
     #   Splitting Tweets
@@ -179,4 +184,5 @@ def main():
     print("\n\n Done!")
 
 
-main()
+if __name__ == '__main__':
+    main()
