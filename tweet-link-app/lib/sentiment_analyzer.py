@@ -3,17 +3,37 @@ sentiment_analyzer: the file in charge of analyzing tweet sentiment and keywords
 @author Abigail Goodwin <abby.goodwin@outlook.com>
 """
 
+# Python libs:
+import os
+from pathlib import Path
+import json
+
+# Azure libs:
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.textanalytics import TextAnalyticsClient
-
-# "Static" Attributes
-api_endpoint = 'https://example.cognitiveservices.azure.com/'
-api_key = AzureKeyCredential('')  # Again, something you'd like to obfuscate.
-api_call = TextAnalyticsClient(endpoint=api_endpoint, credential=api_key)
 
 ############################################################
 #   Analyze Tweets
 ############################################################
+
+def init_cog_services() -> None:
+    """
+    Initializes the Azure Cognitive Services connection with the user-provided endpoint
+    and credentials.
+    """
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    config_file_path = Path(current_path).parent.parent.absolute()
+
+    with open(f"{config_file_path}/project_config.json") as config_file:
+        config_json = json.load(config_file)
+
+        # Grab endpoint + key:
+        azure_endpoint = config_json['azure-info']['endpoint']
+        auth_key = AzureKeyCredential(config_json['azure_info']['key'])
+
+        # Create a global that's used in the rest of this module:
+        global cog_services
+        cog_services = TextAnalyticsClient(endpoint=azure_endpoint, credential=auth_key)
 
 
 def analyze_tweet(tweet):
@@ -32,9 +52,9 @@ def analyze_tweet(tweet):
     )
 
     raw_results = {}
-    raw_results['sentiment'] = api_call.analyze_sentiment(
+    raw_results['sentiment'] = cog_services.analyze_sentiment(
         api_document, show_opinion_mining=True)
-    raw_results['key_words'] = api_call.extract_key_phrases(api_document)
+    raw_results['key_words'] = cog_services.extract_key_phrases(api_document)
 
     # Gives an atrocious output.... time to clean it up.
     sentiment_info = raw_results['sentiment'][0]
@@ -82,7 +102,7 @@ def analyze_tweet_sentiments(tweet_list):
     # Step 2: Calling Azure in Batches
     raw_results = []
     for tweets in batch(api_document, 10):
-        raw_results.append(api_call.analyze_sentiment(
+        raw_results.append(cog_services.analyze_sentiment(
             tweets, show_opinion_mining=True))
 
     # Step 3: Cleaning & Separating Data
@@ -121,7 +141,7 @@ def analyze_tweet_keywords(tweet_list):
 
     raw_results = []
     for tweets in batch(api_document, 10):
-        raw_results.append(api_call.extract_key_phrases(tweets))
+        raw_results.append(cog_services.extract_key_phrases(tweets))
 
     tweet_keywords = []
     for group in raw_results:

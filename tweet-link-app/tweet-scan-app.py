@@ -37,7 +37,8 @@ def pull_topic_tweets(in_topic, token):
     print("INFO: Starting tweet import.")
     response = twitter_importer.fetch_tweets(query_params)
 
-    # Should allow us to get the next page of tweets...
+    # Should allow us to get the next page of tweets if a valid
+    # response was returned.
     next_token = None
     try:
         next_token = response['meta']['next_token']

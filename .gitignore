@@ -8,4 +8,4 @@ fresh-env
 *.db
 
 # Ignore local config files from being pushed up:
-**/project_config.json
+project_config.json
