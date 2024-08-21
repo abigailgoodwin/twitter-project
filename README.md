@@ -26,12 +26,13 @@ To run this application, it is assumed that you have:
 - Access to a Twitter API endpoint
 - Access to an Azure Services endpoint
 
-## Step 1: Install the Project Dependencies
+## Step 1: Configure the Project
 
 The first step to running this application is to install its required dependencies.
 
 1. Open a terminal in this project's root folder (`twitter-project/`).
 2. Run the following command: `pip install -r requirements.txt`. This will install this project's dependencies.
+3. Ensure that your API Bearer tokens have been added to the project's `project_config.json` file.
 
 ## Step 2: Run the App
 
