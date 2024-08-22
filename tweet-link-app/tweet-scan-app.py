@@ -1,9 +1,15 @@
+"""
+Fetches 1,000 Tweets from X (formerly Twitter) on the user's given topics and analyzes popular sentiment
+across those topics.
+
+@author Abigail Goodwin <abby.goodwin@outlook.com>
+Copyright 2024, Abigail Goodwin, All rights reserved.
+"""
+
 import lib.twitter_importer as twitter_importer
 from lib.tweet_splitter import split_authors, split_json, split_locations
 from lib.data_exporter import DataExporter
 from lib.sentiment_analyzer import analyze_tweet_sentiments, analyze_tweet_keywords
-import json
-import sys
 
 
 ############################################################

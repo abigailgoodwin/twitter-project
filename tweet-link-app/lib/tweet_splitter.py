@@ -1,12 +1,10 @@
-import json
 """
-    tweet_splitter is in charge of taking raw JSON and converting it into a list of separated tweets.
-    The "list of separated tweets" will be a list of dictionaries.
+tweet_splitter is in charge of taking raw JSON and converting it into a list of separated tweets.
+The "list of separated tweets" will be a list of dictionaries.
     
-    @author Abby Goodwin <abigailgoodwin@mail.weber.edu>
-    @date 12/02/2021
+@author Abigail Goodwin <abby.goodwin@outlook.com>
+Copyright 2024, Abigail Goodwin, All rights reserved.
 """
-
 
 def split_json(raw_json):
     """

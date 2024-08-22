@@ -1,5 +1,5 @@
 # Overview: Tweet Analysis Project
-
+Author: Abigail Goodwin <abby.goodwin@outlook.com>
 ## 50,000 Foot View
 
 In short, this project is a Python application that prompts users for three topics. The application then uses Twitter's API to grab 1,000 Tweets related to each topic and stores them in a local database. At this point, these Tweets are pushed through Microsoft's Cognitive Services to determine their overall sentiment (positive, neutral, negative) and any significant keywords. Once this data is aggregated, a PowerBI dashboard imports the database's rows to create a visualization of the data retrieved.
@@ -42,5 +42,9 @@ At this point, you should have the prerequisite packages to run this app.
 2. Run the following command: `python3 ./TweetScanApp.py`. This should start up the application for you.
 
 ## Step 3: Using the App
+1. When started, the app will automatically prompt you for your first topic.
+2. Provide your first topic by typing the topic in the terminal and then pressing ENTER.
+3. Repeat steps 1-2 for your other two topics.
+4. It may take some time after entering your topics for the app to finish its analysis - this is normal.
 
-TODO
+> Copyright 2024, Abigail Goodwin, All rights reserved.

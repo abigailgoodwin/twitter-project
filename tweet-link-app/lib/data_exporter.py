@@ -1,6 +1,8 @@
 """
 data_exporter: the file in charge of opening a connection to the database and querying the database.
+
 @author Abigail Goodwin <abby.goodwin@outlook.com>
+Copyright 2024, Abigail Goodwin, All rights reserved.
 """
 
 import sqlite3

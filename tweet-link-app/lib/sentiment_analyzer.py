@@ -1,6 +1,8 @@
 """
 sentiment_analyzer: the file in charge of analyzing tweet sentiment and keywords using Azure Cog Services.
+
 @author Abigail Goodwin <abby.goodwin@outlook.com>
+Copyright 2024, Abigail Goodwin, All rights reserved.
 """
 
 # Python libs:

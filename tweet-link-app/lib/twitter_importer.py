@@ -2,7 +2,6 @@
 twitter_importer is a module that simply contains the function used to fetch Tweets from the Twitter API.
 
 @author Abigail Goodwin <abby.goodwin@outlook.com>
-
 Copyright 2024, Abigail Goodwin, All rights reserved.
 """
 
