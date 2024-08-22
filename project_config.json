@@ -3,8 +3,8 @@
         "bearer-token": "",
         "user-agent": ""
     },
-    "azure-info":
-    {
+    "azure-info": {
+        "endpoint": "",
         "key": ""
     }
 }

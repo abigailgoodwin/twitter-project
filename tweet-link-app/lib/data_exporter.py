@@ -1,6 +1,8 @@
 """
 data_exporter: the file in charge of opening a connection to the database and querying the database.
+
 @author Abigail Goodwin <abby.goodwin@outlook.com>
+Copyright 2024, Abigail Goodwin, All rights reserved.
 """
 
 import sqlite3
@@ -26,7 +28,7 @@ class DataExporter:
 
         # Create the TwitterBase SQLite DB in the SQL folder:
         self.connection = sqlite3.connect(
-            os.path.join(self.sql_path, "TwitterBase.db"))
+            os.path.join(self.sql_path, "twitter_base.db"))
 
         # Store the cursor as a class member:
         self.cursor = self.connection.cursor()

@@ -1,9 +1,15 @@
+"""
+Fetches 1,000 Tweets from X (formerly Twitter) on the user's given topics and analyzes popular sentiment
+across those topics.
+
+@author Abigail Goodwin <abby.goodwin@outlook.com>
+Copyright 2024, Abigail Goodwin, All rights reserved.
+"""
+
 import lib.twitter_importer as twitter_importer
 from lib.tweet_splitter import split_authors, split_json, split_locations
 from lib.data_exporter import DataExporter
 from lib.sentiment_analyzer import analyze_tweet_sentiments, analyze_tweet_keywords
-import json
-import sys
 
 
 ############################################################
@@ -37,8 +43,14 @@ def pull_topic_tweets(in_topic, token):
     print("INFO: Starting tweet import.")
     response = twitter_importer.fetch_tweets(query_params)
 
-    # Should allow us to get the next page of tweets...
-    next_token = response['meta']['next_token']
+    # Should allow us to get the next page of tweets if a valid
+    # response was returned.
+    next_token = None
+    try:
+        next_token = response['meta']['next_token']
+    except:
+        print("Invalid X API credentials provided.")
+        exit(1)
 
     ############################################################
     #   Splitting Tweets
@@ -179,4 +191,5 @@ def main():
     print("\n\n Done!")
 
 
-main()
+if __name__ == '__main__':
+    main()

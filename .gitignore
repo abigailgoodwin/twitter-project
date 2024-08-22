@@ -6,3 +6,6 @@ fresh-env
 
 # Ignore any generated databases:
 *.db
+
+# Ignore local config files from being pushed up:
+project_config.json
