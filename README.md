@@ -22,7 +22,6 @@ To run this application, it is assumed that you have:
 
 - Python 3.8 or Greater
 - pip 20.0 or Greater (typically installed with the above)
-- Access to your own hosted SQL Database
 - Access to a Twitter API endpoint
 - Access to an Azure Services endpoint
 
